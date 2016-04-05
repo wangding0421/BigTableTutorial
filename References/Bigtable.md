@@ -72,6 +72,17 @@ The Bigtable implementation has three major components: a library that is linked
 
 ### Tablet Location ###
 
+See the below image:
+
+![Three-level hierarchy](http://zhangjunhd.github.io/assets/2013-03-10-bigtable/2.png) 
+
+The first level is a file stored in Chubby that contains the location of the _root tablet_. The root tablet contains the location of all tablets in a special **METADATA** table. Each **METADATA** tablet contains the location of a set of user tablets.
+
+The **METADATA** table stores the location of a tablet under a row key that is an encoding of the tablet’s table identifier and its end row.
+
+The client library caches tablet locations. If the client does not know the location of a tablet, or if it discovers that cached location information is incorrect, then it recursively moves up the tablet location hierarchy.
+
+
 
 
 ### Tablet Assignment ###
