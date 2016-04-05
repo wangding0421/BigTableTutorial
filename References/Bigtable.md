@@ -82,14 +82,49 @@ The **METADATA** table stores the location of a tablet under a row key that is a
 
 The client library caches tablet locations. If the client does not know the location of a tablet, or if it discovers that cached location information is incorrect, then it recursively moves up the tablet location hierarchy.
 
-
-
-
 ### Tablet Assignment ###
+
+To sum up, the tablet contains **assigned tablets** and **unassigned tablets**. The assignment of tablets are managed by the master. However Chubby is the master of all which can control the execution of the master as well as the tablets. 
+
+Tablets and master have to hold their lock (locker for tablets and master locker for the master) to execute. THerefore the master has to do regular check on the tablet servers to do cleanup and tablet reassignment.
+
+Chubby -> Master -> Tablet Server -> Tablet
 
 ### Tablet Serving ###
 
+![Tablet Serving](http://zhangjunhd.github.io/assets/2013-03-10-bigtable/3.png) 
+
+* Commit log stores the writes
+  * Recent writes are stored in the memtable
+  * Older writes are stored in SSTables
+* Read operations see a merged view of the memtable and the SSTables
+
 ### Compactions ###
+
+* Minor compaction: When the memtable size reaches a threshold, the memtable is frozen, a new memtable is created, and the frozen memtable is converted to an SSTable and written to GFS.
+* Merging compaction: A merging compaction reads the contents of a few SSTables and the memtable, and writes out a new SSTable.
+* Major compactinon: A merging compaction that rewrites all SSTables into exactly one SSTable is called a major compaction. (Clean & Complete, saving space & reclaiming resources)
+
+## Refinements ##
+
+**Locality Groups**: Clients can group multiple column families together into a locality group. For example in the Webtable. The language and checksum (page metadata) can be put into one locality group and the content could be in another locality group for better faster access performance. Locality group could be treated and handled together, thus no need to load data for several times.
+
+**Compression**: Clients can control whether or not the SSTables for a locality group are compressed, and if so, which compression format is used.
+
+**Caching for Read Performance**: The Scan Cache is a higher-level cache that caches the key-value pairs returned by the SSTable interface to the tablet server code, this is good for reading same data repeatly. The Block Cache is a lower-level cache that caches SSTables blocks that were read from GFS, this is good for sequencial reads or random reads of different columns in the same locality group within a hot row.
+
+**Bloom Filters**: Reduce read operation disk access.
+
+**Commit-log Implementation**: Append mutations to a single commit log per tablet server, co-mingling mutations for different tablets in the same physical log file. Sort the merged log file by `⟨table, row name, log sequence number⟩` for faster recovery.
+
+
+
+
+
+
+
+
+
 
 
 
