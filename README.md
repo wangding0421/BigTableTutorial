@@ -1,2 +1,2 @@
 # BigTableTutorial
-A Tutorial for Google BigTable
+A Tutorial for Google BigTable test
